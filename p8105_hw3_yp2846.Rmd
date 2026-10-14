@@ -8,11 +8,16 @@ output: github_document
 library(tidyverse)
 library(lubridate)
 library(patchwork)
+```
+
+```{r}
 library(p8105.datasets)
 data("ny_noaa")
 ```
 
-The dataset contains `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. Each row represents a daily weather observation at a weather station.  The key variables are `r colnames(ny_noaa)`. The `id` and `date` variables identify the weather station and observation date, while the remaining variables contain weather measurements.
+The dataset contains `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. Each row represents a daily weather observation at a weather station.
+
+The key variables are `r colnames(ny_noaa)`. The `id` and `date` variables identify the weather station and observation date, while the remaining variables contain weather measurements.
 
 ```{r}
 colMeans(is.na(ny_noaa))*100
@@ -38,6 +43,7 @@ ny_noaa_clean |>
   count(snow, sort = TRUE) |>
   head(3)
 ```
+
 The most commonly observed snowfall values are 0 mm, 25 mm, and 13 mm. The value 0 mm is by far the most frequent. This is expected because most days of the year in New York State do not experience measurable snowfall, especially during warmer months.
 The frequent values of 13 mm and 25 mm may reflect snowfall measurements originally recorded in inches and converted to millimeters, corresponding approximately to 0.5 and 1 inch, respectively.
 
@@ -88,7 +94,7 @@ snow_plot = ny_noaa_clean |>
 temp_plot + snow_plot
 ```
 
-The left panel shows a strong positive association between minimum and maximum temperatures. Most observations are concentrated along an upward-sloping band. This indicates that higher minimum temperatures are generally associated with higher maximum temperatures. A few potential outliers are present, including extremely high or low temperatures and observations where the maximum temperature is lower than the minimum temperature.
+The left panel shows a strong positive association between minimum and maximum temperatures, with most observations concentrated along an upward-sloping band. 
 
 
 ```{r}
@@ -99,7 +105,7 @@ ny_noaa_clean |>
 
 Some potential outliers are present, including extremely high or low temperatures. Additionally, 1,183 observations have maximum temperatures lower than minimum temperatures, suggesting possible data quality issues.
 
-The right panel shows that the distribution of snowfall between 0 and 100 mm is relatively consistent across years. The median snowfall is approximately 25 mm in most years, with the interquartile range generally extending from 13 mm to 51 mm. There are some variations in later years, but no clear long-term trend is apparent.
+The right panel shows the distribution of positive daily snowfall observations below 100 mm across years. Days with no recorded snowfall and observations of 100 mm or more were excluded. The median snowfall is approximately 25 mm in most years, with the interquartile range generally extending from 13 mm to 51 mm. Although some variation is observed across years, there is no clear long-term trend within this selected range. These findings apply only to the filtered observations and do not represent the overall snowfall distribution, including days without snowfall or extreme snowfall events.
 
 # Problem 2
 ```{r}
@@ -190,6 +196,7 @@ nhanes |>
     legend.position = "none"
   )
 ```
+
 The sample includes 228 participants, with 118 men and 110 women. The more-than-high-school education group is the largest, with 115 participants, while the other two groups have similar sample sizes.
 
 Age distributions differ across education levels. Participants with more than a high school education tend to be younger, while those with less than a high school education tend to be older. Within the high school equivalent group, women have a higher median age than men. In contrast, the age distributions of men and women are relatively similar in the other two education groups.
@@ -214,9 +221,22 @@ nhanes_total |>
     y = "Total Daily MIMS",
     color = "Sex"
   )
+
+nhanes |>
+  mutate(
+    n_missing = rowSums(
+      is.na(pick(starts_with("min")))
+    )
+  ) |>
+  summarise(
+    participants_with_missing = sum(n_missing > 0),
+    max_missing_minutes = max(n_missing)
+  )
 ```
 
 Total daily activity generally decreases with age across all three education levels, although the patterns are not strictly linear. The decline is particularly noticeable among participants with less than a high school education. Women tend to have higher total activity than men in the high school equivalent and more than high school groups, especially at younger and middle ages. However, there is considerable variability within each group, and the smoothed trends should be interpreted cautiously.
+
+Total daily activity was calculated by summing the `r sum(startsWith(names(nhanes_total), "min"))` minute-level MIMS values for each participant. All `r nrow(nhanes_total)` participants had complete minute-level activity measurements, so no observations were excluded due to missing MIMS values.
 
 
 ```{r}
@@ -257,6 +277,177 @@ activity_by_minute |>
 
 Across all three education levels, activity follows a similar daily pattern, reaching its lowest levels during the early morning hours (approximately 3–5 AM), increasing rapidly after 5 AM, and declining again in the evening.
 
-Sex differences vary by education level. Men and women with less than a high school education show relatively similar activity patterns, while women tend to have higher daytime activity levels in the other two education groups. Participants with less than a high school education show a more pronounced late-morning peak, whereas those with more than a high school education maintain relatively stable activity levels throughout the day.
+Sex differences vary by education level. Men and women with less than a high school education show relatively similar activity patterns, while women tend to have higher daytime activity levels in the other two education groups. Participants with less than a high school education show a more pronounced late-morning peak, whereas those with more than a high school education maintain relatively stable activity levels during the daytime hours.
 
 Overall, the results suggest that daily activity patterns differ by sex and education level, although these descriptive differences do not necessarily imply statistically significant associations.
+
+# Problem 3
+
+```{r}
+jan_2020 = read_csv(
+  "./data/citibike/Jan 2020 Citi.csv",
+  show_col_types = FALSE
+) |>
+  mutate(year = 2020, month = "January")
+
+july_2020 = read_csv(
+  "./data/citibike/July 2020 Citi.csv",
+  show_col_types = FALSE
+) |>
+  mutate(year = 2020, month = "July")
+
+jan_2024 = read_csv(
+  "./data/citibike/Jan 2024 Citi.csv",
+  show_col_types = FALSE
+) |>
+  mutate(year = 2024, month = "January")
+
+july_2024 = read_csv(
+  "./data/citibike/July 2024 Citi.csv",
+  show_col_types = FALSE
+) |>
+  mutate(year = 2024, month = "July")
+```
+
+```{r}
+citibike = bind_rows(
+  jan_2020,
+  july_2020,
+  jan_2024,
+  july_2024
+)
+
+citibike = citibike |>
+  mutate(
+    year = factor(year),
+    month = factor(
+      month,
+      levels = c("January", "July")
+    ),
+    weekdays = factor(
+      weekdays,
+      levels = c(
+        "Monday", "Tuesday", "Wednesday",
+        "Thursday", "Friday", "Saturday", "Sunday"
+      )
+    ),
+    member_casual = factor(
+      member_casual,
+      levels = c("casual", "member"),
+      labels = c("Casual", "Member")
+    ),
+    rideable_type = factor(
+      rideable_type,
+      levels = c("classic_bike", "electric_bike"),
+      labels = c("Classic bike", "Electric bike")
+    )
+  )
+
+```
+
+The combined dataset contains `r nrow(citibike)` sampled Citi Bike rides from January and July of 2020 and 2024, with `r ncol(citibike)` variables describing ride characteristics, duration, station information, membership status, year, and month. Each ride has a unique identifier, and ride duration ranges from approximately `r round(min(citibike$duration), 4)` to `r round(max(citibike$duration), 4)` minutes, with a median of `r round(median(citibike$duration), 4)` minutes. Most rides were taken by members. There are `r sum(is.na(citibike$start_station_name))` missing starting station names and `r sum(is.na(citibike$end_station_name))` missing ending station names, which are retained for analyses that do not require station information.
+
+```{r}
+ride_count_table = citibike |>
+  count(year, month, member_casual) |>
+  pivot_wider(
+    names_from = member_casual,
+    values_from = n,
+    values_fill = 0
+  ) |>
+  mutate(Total = Casual + Member)
+
+knitr::kable(
+  ride_count_table,
+  caption = "Number of Rides by Year, Month, and Membership"
+)
+```
+
+Members accounted for the majority of sampled rides in all four year-month combinations. July had more rides than January in both 2020 and 2024, suggesting a seasonal pattern in bike usage. The number of sampled rides was also higher in 2024 than in 2020 for both months, with July 2024 having the highest count (47,156 rides). Casual ridership increased substantially from January to July in both years, suggesting that casual riders may be more sensitive to seasonal changes than members.
+
+
+```{r}
+top5_stations = citibike |>
+  filter(
+    year == "2024",
+    month == "July",
+    !is.na(start_station_name)
+  ) |>
+  count(start_station_name, sort = TRUE) |>
+  slice_head(n = 5) |>
+  rename(
+    `Starting Station` = start_station_name,
+    `Number of Rides` = n
+  )
+
+knitr::kable(
+  top5_stations
+)
+```
+
+The table shows the five most frequently used starting stations in the July 2024 sample, ranked by the number of rides originating from each station. These stations represent the most popular departure locations among the sampled rides during this period.
+
+```{r}
+duration_summary = citibike |>
+  group_by(year, month, weekdays) |>
+  summarise(
+    median_duration = median(duration, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+duration_summary |>
+  ggplot(
+    aes(
+      x = weekdays,
+      y = median_duration,
+      color = month,
+      group = month
+    )
+  ) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ year) +
+  labs(
+    title = "Median Ride Duration by Weekday, Month, and Year",
+    x = "Day of Week",
+    y = "Median Ride Duration (minutes)",
+    color = "Month"
+  )+
+  scale_x_discrete(
+    labels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+  )
+```
+
+Median ride duration was consistently longer in July than in January across both years. Weekend rides generally lasted longer than weekday rides, particularly in July 2020, when median durations peaked at approximately 16.5 minutes. This weekend pattern was less pronounced in 2024.
+
+Additionally, median ride durations were lower in 2024 than in 2020 across both months and most days of the week. Overall, the plot suggests that ride duration varies by month, day of the week, and year, with particularly noticeable differences between January and July.
+
+
+```{r}
+citibike_2024 = citibike |>
+  filter(year == "2024")
+
+citibike_2024 |>
+  ggplot(
+    aes(
+      x = member_casual,
+      y = duration,
+      fill = rideable_type
+    )
+  ) +
+  geom_boxplot(
+    position = position_dodge(),
+    outlier.shape = NA
+  ) +
+  facet_wrap(~ month) +
+  coord_cartesian(ylim = c(0, 60)) +
+  labs(
+    title = "Ride Duration by Month, Membership, and Bike Type (2024)",
+    x = "Membership Status",
+    y = "Ride Duration (minutes)",
+    fill = "Bike Type"
+  )
+```
+
+In 2024, casual riders generally had longer median ride durations and greater variability than members, particularly when using classic bikes. Ride durations also tended to be longer in July than in January across most groups. Among casual riders, classic bikes had higher median durations than electric bikes in both months. However, among members, the differences between bike types were smaller, with electric bikes showing a slightly higher median duration in July. Overall, the results suggest that ride duration varies by month, membership status, and bike type, with possible differences in the relationship between bike type and duration across membership groups.
+
