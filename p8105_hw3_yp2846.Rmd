@@ -60,7 +60,12 @@ ny_noaa_clean |>
   facet_grid(~month,
              labeller = labeller(
                month = c("1" = "January", "7" = "July")
-  )) 
+  )) +
+  labs(
+    title = "Average Maximum Temperature by Year",
+    x = "Year",
+    y = "Average Maximum Temperature (°C)"
+  )
 ```
 
 For New York state, July is generally warmer than January. The average maximum temperature of January are mostly between $-5^\circ C$ and $5^\circ C$. The average maximum temperature of July are mostly between $24^\circ C$ and $30^\circ C$.
@@ -153,13 +158,17 @@ nhanes_covar = nhanes_covar |>
 nhanes = nhanes_covar |>
   inner_join(nhanes_accel, by = "seqn")
 head(nhanes,5)
+dim(nhanes)
 ```
+After excluding participants younger than 21 years and those with missing demographic information, the merged dataset contains 228 participants. Each row represents one participant and includes demographic characteristics and minute-level accelerometer measurements across a 24-hour period.
+
 ```{r}
 demo_table = nhanes |>
   count(education, sex)
 
 demo_table
 ```
+
 ```{r}
 demo_table = nhanes |>
   count(education, sex) |>
@@ -385,7 +394,7 @@ knitr::kable(
 )
 ```
 
-The table shows the five most frequently used starting stations in the July 2024 sample, ranked by the number of rides originating from each station. These stations represent the most popular departure locations among the sampled rides during this period.
+The table shows the five most frequently used starting stations in the July 2024 sample. In July 2024, Pier 61 at Chelsea Piers was the most frequently used starting station in the sample, with 163 rides, followed by University Pl & E 14 St (155 rides) and W 21 St & 6 Ave (152 rides). The five most popular starting stations had relatively similar ride counts, ranging from 146 to 163. These results reflect sampled rides rather than all Citi Bike trips in New York City.
 
 ```{r}
 duration_summary = citibike |>
