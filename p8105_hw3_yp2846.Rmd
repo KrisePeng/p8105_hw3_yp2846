@@ -6,7 +6,6 @@ output: github_document
 
 ```{r}
 library(tidyverse)
-library(lubridate)
 library(patchwork)
 ```
 
@@ -57,7 +56,7 @@ ny_noaa_clean |>
   .groups = "drop")|>
   ggplot(aes(x = year, y = mean_tmax)) +
   geom_point(alpha = 0.15, size = 0.6)+
-  facet_grid(~month,
+  facet_grid(~ month,
              labeller = labeller(
                month = c("1" = "January", "7" = "July")
   )) +
@@ -157,17 +156,10 @@ nhanes_covar = nhanes_covar |>
   )
 nhanes = nhanes_covar |>
   inner_join(nhanes_accel, by = "seqn")
-head(nhanes,5)
 dim(nhanes)
 ```
 After excluding participants younger than 21 years and those with missing demographic information, the merged dataset contains 228 participants. Each row represents one participant and includes demographic characteristics and minute-level accelerometer measurements across a 24-hour period.
 
-```{r}
-demo_table = nhanes |>
-  count(education, sex)
-
-demo_table
-```
 
 ```{r}
 demo_table = nhanes |>
@@ -354,7 +346,7 @@ citibike = citibike |>
 
 ```
 
-The combined dataset contains `r nrow(citibike)` sampled Citi Bike rides from January and July of 2020 and 2024, with `r ncol(citibike)` variables describing ride characteristics, duration, station information, membership status, year, and month. Each ride has a unique identifier, and ride duration ranges from approximately `r round(min(citibike$duration), 4)` to `r round(max(citibike$duration), 4)` minutes, with a median of `r round(median(citibike$duration), 4)` minutes. Most rides were taken by members. There are `r sum(is.na(citibike$start_station_name))` missing starting station names and `r sum(is.na(citibike$end_station_name))` missing ending station names, which are retained for analyses that do not require station information.
+The combined dataset contains `r nrow(citibike)` sampled Citi Bike rides from January and July of 2020 and 2024, with `r ncol(citibike)` variables describing ride characteristics, duration, station information, membership status, year, and month. Each ride has a unique identifier, and ride duration ranges from approximately `r round(min(pull(citibike,duration)), 4)` to `r round(max(pull(citibike,duration)), 4)` minutes, with a median of `r round(median(pull(citibike,duration)), 4)` minutes. Most rides were taken by members. There are `r sum(is.na(pull(citibike,start_station_name)))` missing starting station names and `r sum(is.na(pull(citibike,end_station_name)))` missing ending station names, which are retained for analyses that do not require station information.
 
 ```{r}
 ride_count_table = citibike |>
