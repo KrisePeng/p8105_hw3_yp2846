@@ -43,7 +43,7 @@ ny_noaa_clean |>
   head(3)
 ```
 
-The most commonly observed snowfall values are 0 mm, 25 mm, and 13 mm. The value 0 mm is by far the most frequent. This is expected because most days of the year in New York State do not experience measurable snowfall, especially during warmer months.
+After excluding missing snowfall observations, the most commonly observed snowfall values are 0 mm, 25 mm, and 13 mm. The value 0 mm is by far the most frequent. This is expected because most days of the year in New York State do not experience measurable snowfall, especially during warmer months.
 The frequent values of 13 mm and 25 mm may reflect snowfall measurements originally recorded in inches and converted to millimeters, corresponding approximately to 0.5 and 1 inch, respectively.
 
 
@@ -125,9 +125,6 @@ nhanes_accel = read_csv(
   show_col_types = FALSE
 )|>
   janitor::clean_names()
-
-head(nhanes_covar,5)
-head(nhanes_accel,5)
 ```
 ```{r}
 nhanes_covar = nhanes_covar |>
@@ -343,7 +340,6 @@ citibike = citibike |>
       labels = c("Classic bike", "Electric bike")
     )
   )
-
 ```
 
 The combined dataset contains `r nrow(citibike)` sampled Citi Bike rides from January and July of 2020 and 2024, with `r ncol(citibike)` variables describing ride characteristics, duration, station information, membership status, year, and month. Each ride has a unique identifier, and ride duration ranges from approximately `r round(min(pull(citibike,duration)), 4)` to `r round(max(pull(citibike,duration)), 4)` minutes, with a median of `r round(median(pull(citibike,duration)), 4)` minutes. Most rides were taken by members. There are `r sum(is.na(pull(citibike,start_station_name)))` missing starting station names and `r sum(is.na(pull(citibike,end_station_name)))` missing ending station names, which are retained for analyses that do not require station information.
@@ -364,7 +360,7 @@ knitr::kable(
 )
 ```
 
-Members accounted for the majority of sampled rides in all four year-month combinations. July had more rides than January in both 2020 and 2024, suggesting a seasonal pattern in bike usage. The number of sampled rides was also higher in 2024 than in 2020 for both months, with July 2024 having the highest count (47,156 rides). Casual ridership increased substantially from January to July in both years, suggesting that casual riders may be more sensitive to seasonal changes than members.
+Members accounted for the majority of sampled rides in all four year-month combinations. The sampled ride counts were higher in July than in January in both 2020 and 2024, and higher in 2024 than in 2020 for both months. July 2024 had the highest count, with 47,156 rides. The number of sampled casual rides also increased substantially from January to July in both years. These patterns describe the provided samples and should not necessarily be interpreted as changes in overall Citi Bike ridership.
 
 
 ```{r}
@@ -446,7 +442,8 @@ citibike_2024 |>
     title = "Ride Duration by Month, Membership, and Bike Type (2024)",
     x = "Membership Status",
     y = "Ride Duration (minutes)",
-    fill = "Bike Type"
+    fill = "Bike Type",
+    caption = "Display limited to 0–60 minutes."
   )
 ```
 
